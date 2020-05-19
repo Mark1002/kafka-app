@@ -18,6 +18,12 @@ def time_millis():
     return str(round(time.time() * 1000))
 
 
+def check_topic_exists(client: AdminClient, topic: str) -> bool:
+    """Checks if the given topic exists in Kafka."""
+    topic_metadata = client.list_topics(timeout=5)
+    return topic in set(t.topic for t in iter(topic_metadata.topics.values()))
+
+
 def create_topics(client: AdminClient, topics: list):
     """Create kafka topic."""
     new_topics = [
@@ -40,7 +46,10 @@ def main():
     }
     admin_clinet = AdminClient({'bootstrap.servers': '127.0.0.1:9092'})
     topic_name = 'local.test.topic'
-    create_topics(admin_clinet, [topic_name])
+    if not check_topic_exists(admin_clinet, topic_name):
+        create_topics(admin_clinet, [topic_name])
+    else:
+        print(f'topic {topic_name} alreadly exist!')
 
     p = Producer(conf)
     for data in datas:
