@@ -1,5 +1,6 @@
 """Producer for kafka."""
 import time
+from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka import Producer
 
 
@@ -17,18 +18,35 @@ def time_millis():
     return str(round(time.time() * 1000))
 
 
+def create_topics(client: AdminClient, topics: list):
+    """Create kafka topic."""
+    new_topics = [
+        NewTopic(topic, num_partitions=3, replication_factor=1) for topic in topics # noqa
+    ]
+    result = client.create_topics(new_topics)
+    for topic, f in result.items():
+        try:
+            f.result()  # The result itself is None
+            print(f"Topic {topic} created")
+        except Exception as e:
+            print(f"Failed to create topic {topic}: {e}")
+
+
 def main():
     """Main."""
     datas = ['apple1', 'banana2', 'ggc3']
     conf = {
-        'bootstrap.servers': '192.168.1.131:9092,192.168.1.132:9093,192.168.1.133:9094', # noqa
+        'bootstrap.servers': '127.0.0.1:9092',
     }
-    p = Producer(conf)
+    admin_clinet = AdminClient({'bootstrap.servers': '127.0.0.1:9092'})
+    topic_name = 'local.test.topic'
+    create_topics(admin_clinet, [topic_name])
 
+    p = Producer(conf)
     for data in datas:
         p.poll(0)
         p.produce(
-            'my-first-topic',
+            topic_name,
             key=time_millis(),
             value=data.encode('utf-8'),
             on_delivery=delivery_report
