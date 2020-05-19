@@ -1,5 +1,6 @@
 """Producer for kafka."""
 import time
+import random
 from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka import Producer
 
@@ -52,15 +53,19 @@ def main():
         print(f'topic {topic_name} alreadly exist!')
 
     p = Producer(conf)
-    for data in datas:
-        p.poll(0)
-        p.produce(
-            topic_name,
-            key=time_millis(),
-            value=data.encode('utf-8'),
-            on_delivery=delivery_report
-        )
-    p.flush()
+    try:
+        while True:
+            p.poll(0)
+            p.produce(
+                topic_name,
+                key=time_millis(),
+                value=datas[random.randint(0, len(datas)-1)].encode('utf-8'),
+                on_delivery=delivery_report
+            )
+    except KeyboardInterrupt:
+        print('aborted by user.')
+    finally:
+        p.flush()
 
 
 if __name__ == '__main__':
