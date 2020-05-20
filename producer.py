@@ -55,13 +55,17 @@ def main():
     p = Producer(conf)
     try:
         while True:
-            p.poll(0)
-            p.produce(
-                topic_name,
-                key=time_millis(),
-                value=datas[random.randint(0, len(datas)-1)].encode('utf-8'),
-                on_delivery=delivery_report
-            )
+            try:
+                p.produce(
+                    topic_name,
+                    key=time_millis(),
+                    value=datas[random.randint(0, len(datas)-1)].encode('utf-8'), # noqa
+                    on_delivery=delivery_report
+                )
+                p.poll(0)
+            except BufferError as e:
+                print(e)
+                p.poll(1)
     except KeyboardInterrupt:
         print('aborted by user.')
     finally:
