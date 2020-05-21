@@ -1,5 +1,6 @@
 """Data generator."""
 import datetime
+import json
 import random
 from dataclasses import dataclass, field, asdict
 from faker import Faker
@@ -35,3 +36,13 @@ class Message:
     def to_dict(self):
         """Convert to dict."""
         return asdict(self)
+
+    def serialize(self):
+        """Serialize data."""
+        return json.dumps(
+            self.to_dict(), default=lambda x: x.isoformat() if isinstance(x, datetime.datetime) else None # noqa
+        )
+
+    def deserialize(json_data):
+        """Deserialize data."""
+        pass

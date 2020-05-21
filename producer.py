@@ -1,8 +1,9 @@
 """Producer for kafka."""
 import time
-import random
 from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka import Producer
+
+from data_generator import Message
 
 
 def delivery_report(err, msg):
@@ -41,7 +42,6 @@ def create_topics(client: AdminClient, topics: list):
 
 def main():
     """Main."""
-    datas = ['apple1', 'banana2', 'ggc3']
     conf = {
         'bootstrap.servers': '127.0.0.1:9092',
     }
@@ -53,19 +53,23 @@ def main():
         print(f'topic {topic_name} alreadly exist!')
 
     p = Producer(conf)
+    messages = (Message() for _ in range(100))
     try:
-        while True:
-            try:
-                p.produce(
-                    topic_name,
-                    key=time_millis(),
-                    value=datas[random.randint(0, len(datas)-1)].encode('utf-8'), # noqa
-                    on_delivery=delivery_report
-                )
-                p.poll(0)
-            except BufferError as e:
-                print(e)
-                p.poll(1)
+        for message in messages:
+            print(message)
+            while True:
+                try:
+                    p.produce(
+                        topic_name,
+                        key=time_millis(),
+                        value=message.serialize(), # noqa
+                        on_delivery=delivery_report
+                    )
+                    p.poll(0)
+                    break
+                except BufferError as e:
+                    print(e)
+                    p.poll(1)
     except KeyboardInterrupt:
         print('aborted by user.')
     finally:
