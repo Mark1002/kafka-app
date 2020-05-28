@@ -26,15 +26,17 @@ def perform_consume(reset_offset_beginning: bool = False):
         c.subscribe([topic_name])
     try:
         while True:
-            msg = c.poll(timeout=1.0)
-            if msg is None:
-                print('Waiting for message or event/error in poll()')
-            elif msg.error():
-                raise KafkaException(msg.error())
-            else:
-                print(f'{msg.topic()}[{msg.partition()}] at offset {msg.offset()}, key: {msg.key()}') # noqa
-                message = json.loads(msg.value())
-                print(message)
+            msgs = c.consume(10, timeout=1.0)
+            print(f'length of messages batch: {len(msgs)}')
+            for msg in msgs:
+                if msg is None:
+                    print('Waiting for message or event/error in poll()')
+                elif msg.error():
+                    raise KafkaException(msg.error())
+                else:
+                    print(f'{msg.topic()}[{msg.partition()}] at offset {msg.offset()}, key: {msg.key()}') # noqa
+                    message = json.loads(msg.value())
+                    print(message)
     except KeyboardInterrupt:
         print('aborted by user.')
     finally:
